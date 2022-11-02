@@ -14,7 +14,8 @@ def loaddata(path):
     #
     # You code here
     #
-
+    bd_np = np.load(path)
+    return bd_np
 
 def separatechannels(bayerdata):
     """ Separate bayer data into RGB channels so that
