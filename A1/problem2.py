@@ -76,9 +76,10 @@ def interpolate(r, g, b):
     #
     # You code here
     #
-    kr = np.array([[1, 1, 1], [1, 1, 0], [1, 0, 0]])
-    kg = np.array([[1, 0, 0], [1, 1, 0], [1, 0, 0]])
-    kb = np.array([[1, 1, 1], [1, 1, 0], [1, 1, 0]])
+    #k = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+    kr = np.array([[1, 0, 1], [1, 1, 0], [0, 1, 1]])
+    kg = np.array([[1, 0, 1], [0, 1, 0], [0, 1, 0]])
+    kb = np.array([[0, 1, 1], [0, 1, 0], [1, 1, 0]])
     r = convolve(r, kr, mode='constant', cval=0.0)
     g = convolve(g, kg, mode='constant', cval=0.0)
     b = convolve(b, kb, mode='constant', cval=0.0)
@@ -106,3 +107,4 @@ plt.imshow(c_img_np)
 plt.subplot(1, 2, 2)
 plt.imshow(fin_img_np)
 plt.show()
+ 
