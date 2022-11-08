@@ -86,7 +86,7 @@ def display_images(img1, img2):
     plt.imshow(img2)
     plt.show()
 
-#check reloaded img
+'''#check reloaded img
 img1 = load_image('data/a1p1.png')
 save_as_npy('a1p1_np.npy', img1)
 new_img1 = load_npy('a1p1_np.npy')
@@ -95,4 +95,4 @@ print('reloaded_imgs same?: ', (img1 == new_img1).all())
 
 #mirrored img and display
 img2 = mirror_horizontal(img1)
-display_images(img1, img2)
+display_images(img1, img2)'''

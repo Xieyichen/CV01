@@ -33,8 +33,8 @@ def cart2hom(points):
     #
     # You code here
     #
-    points_homo = np.ones((points.shape[0], points.shape[1] + 1))
-    points_homo[:, :-1] = points
+    points_homo = np.ones((points.shape[0] + 1, points.shape[1]))
+    points_homo[:-1, :] = points
     return points_homo
 
 
@@ -53,7 +53,7 @@ def hom2cart(points):
     #
     # You code here
     #
-    points_cart = points[:, :-1]
+    points_cart = points[:-1, :]
     return points_cart
 
 
@@ -223,8 +223,8 @@ def projectpoints(P, X):
     #
     # You code here
     #
-    homo_3d = np.hstack((X, np.ones((X.shape[0], 1))))
-    homo_2d = np.matmul(homo_3d, P.transpose())
+    homo_3d = np.vstack((X, np.ones((1, X.shape[1]))))
+    homo_2d = np.matmul(P, homo_3d)
     return homo_2d[:, :-1]
 
 
@@ -280,11 +280,10 @@ def invertprojection(L, P2d, z):
     # You code here
     #
     m = np.matrix(L).I
-    xy = P2d.transpose()
-    z = z.transpose()
-    xyz = np.hstack((xy, z))
-    new_xy = np.array([np.matmul(m, v) for v in xyz])
-    return np.squeeze(new_xy)[:, :-1]
+    xyz = np.vstack((P2d, z))
+    new_xy = np.matmul(m, xyz)
+
+    return new_xy[:-1, :]
 
 
 #P3d = invertprojection(getcentralprojection([0, 0], 1), loadpoints(), loadz())
@@ -306,9 +305,9 @@ def inverttransformation(M, P3d):
     # You code here
     #
     reversed_M = np.matrix(M).I
-    homo_3d = np.hstack((P3d, np.ones((P3d.shape[0], 1))))
-    reversed_3d = np.array([np.matmul(reversed_M, v) for v in homo_3d])
-    return np.squeeze(reversed_3d)[:, :-1]
+    homo_3d = np.vstack((P3d, np.ones((1, P3d.shape[1]))))
+    reversed_3d = np.matmul(reversed_M, homo_3d)
+    return reversed_3d
 
 
 #print(inverttransformation(gettranslation([0, 0, 1]), P3d)[0])
@@ -381,4 +380,4 @@ def p3multiplecoice():
     return ret
 
 
-print(p3multiplecoice())
+#print(p3multiplecoice())

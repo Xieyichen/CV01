@@ -88,7 +88,7 @@ def interpolate(r, g, b):
 
 
 
-img = loaddata('data/bayerdata.npy')
+'''img = loaddata('data/bayerdata.npy')
 
 r_channel, g_channel, b_channel = separatechannels(img)
 c_img_np = assembleimage(r_channel, g_channel, b_channel)
@@ -106,5 +106,5 @@ plt.subplot(1, 2, 1)
 plt.imshow(c_img_np)
 plt.subplot(1, 2, 2)
 plt.imshow(fin_img_np)
-plt.show()
+plt.show()'''
  
