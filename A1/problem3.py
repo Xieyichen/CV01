@@ -33,8 +33,7 @@ def cart2hom(points):
     #
     # You code here
     #
-    points_homo = np.ones((points.shape[0] + 1, points.shape[1]))
-    points_homo[:-1, :] = points
+    points_homo = np.vstack((points, np.ones((1, points.shape[1]))))
     return points_homo
 
 
@@ -53,11 +52,11 @@ def hom2cart(points):
     #
     # You code here
     #
-    points_cart = points[:-1, :]
+    points_cart = points[:-1, :] / points[-1, :]
     return points_cart
 
 
-# print(hom2cart(cart2hom(np.arange(12).reshape((4, 3)))))
+#print(hom2cart(np.arange(12).reshape((4, 3))))
 
 def gettranslation(v):
     """ Returns translation matrix T in homogeneous coordinates for translation by v.
@@ -74,7 +73,7 @@ def gettranslation(v):
     #
     mx_T = np.diag(np.ones(4))
     mx_T[:-1, -1] = v
-    return mx_T
+    return np.matrix(mx_T)
 
 
 # print(gettranslation(np.arange(3)))
@@ -96,7 +95,7 @@ def getxrotation(d):
     c, s = np.cos(dg), np.sin(dg)
     rx = np.diag(np.ones(4))
     rx[1:-1, 1:-1] = np.array(((c, -s), (s, c)))
-    return rx
+    return np.matrix(rx)
 
 
 # print(getxrotation(30))
@@ -118,7 +117,7 @@ def getyrotation(d):
     c, s = np.cos(dg), np.sin(dg)
     ry = np.diag(np.ones(4))
     ry[:-1, :-1] = np.array(((c, 0, s), (0, 1, 0), (-s, 0, c)))
-    return ry
+    return np.matrix(ry)
 
 
 # print(getyrotation(30))
@@ -140,7 +139,7 @@ def getzrotation(d):
     c, s = np.cos(dg), np.sin(dg)
     rz = np.diag(np.ones(4))
     rz[:-2, :-2] = np.array(((c, -s), (s, c)))
-    return rz
+    return np.matrix(rz)
 
 
 # print(getzrotation(30))
@@ -149,7 +148,7 @@ def getzrotation(d):
 def getcentralprojection(principal, focal):
     """ Returns the (3 x 4) matrix L that projects homogeneous camera coordinates on homogeneous
   image coordinates depending on the principal point and focal length.
-  
+
   Args:
     principal: the principal point, 2d vector
     focal: focal length
@@ -161,10 +160,10 @@ def getcentralprojection(principal, focal):
     #
     # You code here
     #
-    mx_k = np.zeros((3, 4))
-    np.fill_diagonal(mx_k, [focal, focal, 1])
+    mx_k = np.diag([focal, focal, 1])
     mx_k[:-1, -1] = principal
-    return mx_k
+    mx_k = np.hstack((mx_k, np.zeros((3, 1))))
+    return np.matrix(mx_k)
 
 
 # print(getcentralprojection([1, 2], -1))
@@ -187,14 +186,10 @@ def getfullprojection(T, Rx, Ry, Rz, L):
     #
     # You code here
     #
-
-    #Matrix-Mul-Assoziativítät, hier: (Rz x (Rx x (Ry x T)))
-    m = np.matmul(Ry, T)
-    m = np.matmul(Rx, m)
+    m = np.matmul(Rx, Ry)
     m = np.matmul(Rz, m)
-
+    m[:-1, -1] = T[:-1, -1]
     p = np.matmul(L, m)
-
     return p, m
 
 
@@ -223,9 +218,9 @@ def projectpoints(P, X):
     #
     # You code here
     #
-    homo_3d = np.vstack((X, np.ones((1, X.shape[1]))))
+    homo_3d = cart2hom(X)
     homo_2d = np.matmul(P, homo_3d)
-    return homo_2d[:, :-1]
+    return homo_2d[:-1, :]
 
 
 def loadpoints():
@@ -261,8 +256,6 @@ def loadz():
     return npy
 
 
-# loadz()
-
 def invertprojection(L, P2d, z):
     """
   Invert just the projection L of cartesian image coordinates P2d with z-coordinates z.
@@ -279,14 +272,13 @@ def invertprojection(L, P2d, z):
     #
     # You code here
     #
-    m = np.matrix(L).I
-    xyz = np.vstack((P2d, z))
-    new_xy = np.matmul(m, xyz)
-
-    return new_xy[:-1, :]
+    p_xy = np.matmul(np.linalg.pinv(L), cart2hom(P2d))
+    p_xy[-2, :] = z
+    return p_xy[:-1, :]
 
 
-#P3d = invertprojection(getcentralprojection([0, 0], 1), loadpoints(), loadz())
+
+# P3d = invertprojection(getcentralprojection([0, 0], 1), loadpoints(), loadz())
 
 
 def inverttransformation(M, P3d):
@@ -304,13 +296,17 @@ def inverttransformation(M, P3d):
     #
     # You code here
     #
-    reversed_M = np.matrix(M).I
-    homo_3d = np.vstack((P3d, np.ones((1, P3d.shape[1]))))
-    reversed_3d = np.matmul(reversed_M, homo_3d)
+    R = np.matrix(np.diag(np.ones(4)))
+    R[:-1, :-1] = M[:-1, :-1]
+    T = np.matrix(np.diag(np.ones(4)))
+    T[:-1, -1] = -M[:-1, -1]
+    reversed_M = np.matmul(R.T, T)
+    reversed_3d = np.matmul(reversed_M, cart2hom(P3d))
+
     return reversed_3d
 
 
-#print(inverttransformation(gettranslation([0, 0, 1]), P3d)[0])
+# print(inverttransformation(gettranslation([0, 0, 1]), P3d)[0])
 
 
 def p3multiplecoice():
@@ -325,7 +321,7 @@ def p3multiplecoice():
     '''change transformation-order'''
     # Translation Matrix
     mx_T = gettranslation(np.array([-27.1, -2.9, -3.2]))
-    
+
     # order before: translation -> rotationY -> rotationX -> rotationZ
     # order after:  rotationY -> translation -> rotationX -> rotationZ
     rx, ry, rz = getxrotation(-30), getyrotation(135), getzrotation(90)
@@ -350,12 +346,11 @@ def p3multiplecoice():
     suf_2d_t = np.matmul(homo_points_3d, suf_mx_M.transpose())[:, :-1]
 
     '''change rotations-order'''
-    #order before: translation -> rotationY -> rotationX -> rotationZ
-    #order after:  translation -> rotationX -> rotationY -> rotationZ
+    # order before: translation -> rotationY -> rotationX -> rotationZ
+    # order after:  translation -> rotationX -> rotationY -> rotationZ
 
     # Projection Matrix use changed order
     _, suf_mx_M = getfullprojection(mx_T, ry, rx, rz, mx_L)
-
 
     # Projected Points using changed order
     suf_2d_r = np.matmul(homo_points_3d, suf_mx_M.transpose())[:, :-1]
@@ -372,12 +367,11 @@ def p3multiplecoice():
 
     ret = -1
     if (pre_2d == suf_2d_rt).all():
-      ret = 2
+        ret = 2
     elif (pre_2d == suf_2d_r).all() and (not (pre_2d == suf_2d_t).all()):
-      ret = 1
+        ret = 1
     elif not (pre_2d == suf_2d_t).all():
-      ret = 0
+        ret = 0
     return ret
 
-
-#print(p3multiplecoice())
+# print(p3multiplecoice())
