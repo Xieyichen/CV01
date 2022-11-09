@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 
 # Plot 2D points
@@ -56,8 +57,6 @@ def hom2cart(points):
     return points_cart
 
 
-#print(hom2cart(np.arange(12).reshape((4, 3))))
-
 def gettranslation(v):
     """ Returns translation matrix T in homogeneous coordinates for translation by v.
 
@@ -75,8 +74,6 @@ def gettranslation(v):
     mx_T[:-1, -1] = v
     return np.matrix(mx_T)
 
-
-# print(gettranslation(np.arange(3)))
 
 def getxrotation(d):
     """ Returns rotation matrix Rx in homogeneous coordinates for a rotation of d degrees around the x axis.
@@ -97,8 +94,6 @@ def getxrotation(d):
     rx[1:-1, 1:-1] = np.array(((c, -s), (s, c)))
     return np.matrix(rx)
 
-
-# print(getxrotation(30))
 
 def getyrotation(d):
     """ Returns rotation matrix Ry in homogeneous coordinates for a rotation of d degrees around the y axis.
@@ -220,7 +215,8 @@ def projectpoints(P, X):
     #
     homo_3d = cart2hom(X)
     homo_2d = np.matmul(P, homo_3d)
-    return homo_2d[:-1, :]
+    car_2d = hom2cart(homo_2d)
+    return car_2d
 
 
 def loadpoints():
@@ -272,9 +268,18 @@ def invertprojection(L, P2d, z):
     #
     # You code here
     #
-    p_xy = np.matmul(np.linalg.pinv(L), cart2hom(P2d))
-    p_xy[-2, :] = z
-    return p_xy[:-1, :]
+    P3d = np.empty((3, P2d.shape[1]))
+    P2d = cart2hom(P2d)
+    P2d = P2d * z
+    P2d[-1, :] = z
+    f = L[0, 0]
+    px = L[0, 2]
+    py = L[1, 2]
+
+    P3d[0, :] = (P2d[0, :] - z * px) / f
+    P3d[1, :] = (P2d[1, :] - z * py) / f
+    P3d[2, :] = z
+    return P3d
 
 
 
@@ -318,7 +323,7 @@ def p3multiplecoice():
   1: Only rotations commute with each other.
   2: All transformations commute.
   '''
-    '''change transformation-order'''
+    '''change translation-order'''
     # Translation Matrix
     mx_T = gettranslation(np.array([-27.1, -2.9, -3.2]))
 
@@ -336,14 +341,15 @@ def p3multiplecoice():
     _, suf_mx_M = getfullprojection(rx, mx_T, ry, rz, mx_L)
 
     # load 3d Points
-    points_3d = np.arange(30).reshape((10, 3))
-    homo_points_3d = np.hstack((points_3d, np.ones((10, 1))))
+    points_3d = np.arange(30).reshape((3, 10))
+    homo_points_3d = cart2hom(points_3d)
 
     # Projected Points using original order
-    pre_2d = np.matmul(homo_points_3d, pre_mx_M.transpose())[:, :-1]
+    pre_3d = hom2cart(np.matmul(pre_mx_M, homo_points_3d))
+
 
     # Projected Points using changed order
-    suf_2d_t = np.matmul(homo_points_3d, suf_mx_M.transpose())[:, :-1]
+    suf_3d_t = hom2cart(np.matmul(suf_mx_M, homo_points_3d))
 
     '''change rotations-order'''
     # order before: translation -> rotationY -> rotationX -> rotationZ
@@ -353,7 +359,7 @@ def p3multiplecoice():
     _, suf_mx_M = getfullprojection(mx_T, ry, rx, rz, mx_L)
 
     # Projected Points using changed order
-    suf_2d_r = np.matmul(homo_points_3d, suf_mx_M.transpose())[:, :-1]
+    suf_3d_r = hom2cart(np.matmul(suf_mx_M, homo_points_3d))
 
     '''change rotations-order and transformation-order'''
     # order before: translation -> rotationY -> rotationX -> rotationZ
@@ -363,15 +369,21 @@ def p3multiplecoice():
     _, suf_mx_M = getfullprojection(rx, rz, ry, mx_T, mx_L)
 
     # Projected Points using changed order
-    suf_2d_rt = np.matmul(homo_points_3d, suf_mx_M.transpose())[:, :-1]
+    suf_3d_rt = hom2cart(np.matmul(suf_mx_M.transpose(), homo_points_3d))
 
     ret = -1
-    if (pre_2d == suf_2d_rt).all():
+    if (pre_3d == suf_3d_rt).all():
         ret = 2
-    elif (pre_2d == suf_2d_r).all() and (not (pre_2d == suf_2d_t).all()):
+    elif (pre_3d == suf_3d_r).all():
         ret = 1
-    elif not (pre_2d == suf_2d_t).all():
+    elif not (pre_3d == suf_3d_t).all():
         ret = 0
-    return ret
+    return ret#, pre_3d, suf_3d_t, suf_3d_r, suf_3d_rt
 
-# print(p3multiplecoice())
+#print(p3multiplecoice())
+#displaypoints3d(p3multiplecoice()[4])
+#plt.show()
+
+'''result of p3multiplecoice: 0'''
+#rotation is not commutative
+#translation is not commutative

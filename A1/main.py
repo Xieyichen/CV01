@@ -89,6 +89,6 @@ def problem3():
     plt.show()
 
 if __name__ == "__main__":
-    #problem1()
-    #problem2()
+    problem1()
+    problem2()
     problem3()

@@ -14,7 +14,7 @@ def display_image(img):
     #
     # You code here
     #
-    imgplot = plt.imshow(img)
+    plt.imshow(img)
     plt.show()
 
 
